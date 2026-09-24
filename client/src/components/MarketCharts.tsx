@@ -18,7 +18,9 @@ type CandlestickChartProps = BaseProps & {
   label: string;
   rows: MarketRow[];
   selectedIndex: number;
+  selectedTimestamp?: number;
   color: string;
+  onCandleSelect?: (timestamp: number) => void;
 };
 
 const chartText = "#edf5ff";
@@ -28,6 +30,20 @@ const tooltipBackground = "#10253b";
 const tooltipBorder = "#31577b";
 const upColor = "#35e08a";
 const downColor = "#ff6b7c";
+const sectorColors: Record<string, string> = {
+  XLK: "#35e08a",
+  XLC: "#35e08a",
+  XLY: "#35e08a",
+  XLU: "#ff6b7c",
+  XLRE: "#ff6b7c",
+  XLP: "#ff6b7c",
+  XLV: "#58a6ff",
+  XLE: "#58a6ff",
+  XLI: "#ffcf5c",
+  XLB: "#ffcf5c",
+  XLF: "#ffcf5c",
+};
+const fallbackColors = ["#a98bff", "#4de1f0", "#ff9f5b", "#e78bdb", "#8bd3dd", "#c8e26a"];
 
 function useEChart(
   ref: React.RefObject<HTMLDivElement | null>,
@@ -79,11 +95,12 @@ function RrgChart({ assets, selectedTicker, onTickerSelect, height = 540, classN
   const ref = useRef<HTMLDivElement>(null);
   const allPoints = assets.flatMap((asset) => asset.points);
   const maxDistance = Math.max(
-    8,
+    2,
     ...allPoints.map((point) => Math.max(Math.abs(point.x - 100), Math.abs(point.y - 100))),
-  ) * 1.18;
-  const min = 100 - maxDistance;
-  const max = 100 + maxDistance;
+  );
+  const padding = Math.max(maxDistance * 0.035, 0.75);
+  const min = 100 - maxDistance - padding;
+  const max = 100 + maxDistance + padding;
 
   const option: echarts.EChartsOption = {
     animation: false,
@@ -123,10 +140,10 @@ function RrgChart({ assets, selectedTicker, onTickerSelect, height = 540, classN
       splitLine: { lineStyle: { color: chartGrid } },
     },
     graphic: [
-      { type: "text", right: 28, top: 10, style: { text: "LEADING", fill: "rgba(53,224,138,.72)", font: "10px IBM Plex Mono" } },
-      { type: "text", left: 66, top: 10, style: { text: "IMPROVING", fill: "rgba(88,166,255,.72)", font: "10px IBM Plex Mono" } },
-      { type: "text", right: 28, bottom: 22, style: { text: "WEAKENING", fill: "rgba(255,207,92,.72)", font: "10px IBM Plex Mono" } },
-      { type: "text", left: 66, bottom: 22, style: { text: "LAGGING", fill: "rgba(255,107,124,.72)", font: "10px IBM Plex Mono" } },
+      { type: "text", right: 28, top: 42, style: { text: "LEADING", fill: "rgba(53,224,138,.78)", font: "10px IBM Plex Mono" } },
+      { type: "text", left: 66, top: 42, style: { text: "IMPROVING", fill: "rgba(88,166,255,.78)", font: "10px IBM Plex Mono" } },
+      { type: "text", right: 28, bottom: 48, style: { text: "WEAKENING", fill: "rgba(255,207,92,.78)", font: "10px IBM Plex Mono" } },
+      { type: "text", left: 66, bottom: 48, style: { text: "LAGGING", fill: "rgba(255,107,124,.78)", font: "10px IBM Plex Mono" } },
     ],
     series: ([
       {
@@ -142,7 +159,7 @@ function RrgChart({ assets, selectedTicker, onTickerSelect, height = 540, classN
         },
       },
       ...assets.map((asset) => {
-        const color = asset.ticker === selectedTicker ? chartText : undefined;
+        const color = sectorColors[asset.ticker] || fallbackColors[asset.ticker.length % fallbackColors.length];
         return {
           type: "line",
           name: asset.ticker,
@@ -150,12 +167,12 @@ function RrgChart({ assets, selectedTicker, onTickerSelect, height = 540, classN
           symbol: "circle",
           symbolSize: (value: any[]) => value[5] === asset.points.length - 1 ? (asset.ticker === selectedTicker ? 10 : 8) : 5,
           smooth: false,
-          lineStyle: { color: color || undefined, opacity: asset.ticker === selectedTicker ? 1 : 0.72, width: asset.ticker === selectedTicker ? 2.2 : 1.4 },
-          itemStyle: { color: color || undefined, borderColor: "#07111f", borderWidth: 1 },
+          lineStyle: { color, opacity: asset.ticker === selectedTicker ? 1 : 0.72, width: asset.ticker === selectedTicker ? 2.2 : 1.4 },
+          itemStyle: { color, borderColor: asset.ticker === selectedTicker ? chartText : "#07111f", borderWidth: asset.ticker === selectedTicker ? 1.5 : 1 },
           label: {
             show: true,
             position: "top",
-            color: color || undefined,
+            color,
             fontFamily: "IBM Plex Mono, monospace",
             fontSize: 10,
             formatter: (params: any) => params.dataIndex === asset.points.length - 1 ? asset.ticker : "",
@@ -172,10 +189,11 @@ function RrgChart({ assets, selectedTicker, onTickerSelect, height = 540, classN
   return <div ref={ref} className={className} style={{ height, width: "100%" }} />;
 }
 
-function CandlestickChart({ ticker, label, rows, selectedIndex, color, height = 360, className }: CandlestickChartProps) {
+function CandlestickChart({ ticker, label, rows, selectedIndex, selectedTimestamp, color, onCandleSelect, height = 360, className }: CandlestickChartProps) {
   const ref = useRef<HTMLDivElement>(null);
   const categories = rows.map((_, index) => String(index));
-  const safeIndex = rows.length ? Math.max(0, Math.min(selectedIndex, rows.length - 1)) : 0;
+  const timestampIndex = selectedTimestamp === undefined ? -1 : rows.findIndex((row) => row.ts === selectedTimestamp);
+  const safeIndex = rows.length ? Math.max(0, Math.min(timestampIndex >= 0 ? timestampIndex : selectedIndex, rows.length - 1)) : 0;
   const candleData = rows.map((row, index) => [row.open, row.close, row.low, row.high, row.ts, index, row.close >= row.open ? upColor : downColor]);
   const option: echarts.EChartsOption = {
     animation: false,
@@ -244,7 +262,10 @@ function CandlestickChart({ ticker, label, rows, selectedIndex, color, height = 
       },
     }],
   };
-  useEChart(ref, option);
+  useEChart(ref, option, (params) => {
+    const row = rows[Number(params?.dataIndex)];
+    if (row) onCandleSelect?.(row.ts);
+  });
   return <div ref={ref} className={className} style={{ height, width: "100%" }} />;
 }
 

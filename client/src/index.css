@@ -145,3 +145,12 @@ button:disabled { cursor: wait; opacity: .55; }
 .slider-row .slider-endpoints { display: flex; justify-content: space-between; gap: 12px; margin-top: 6px; color: var(--muted-2); font-family: "IBM Plex Mono", monospace; font-size: 9px; }
 @media (max-width: 1000px) { .main-grid { grid-template-columns: 1fr; } .main-grid > .side-column { grid-column: auto; } .benchmark-card .plot-wrap, .rrg-card .plot-wrap { min-height: 420px; } }
 @media (max-width: 700px) { .main-grid > .side-column { display: flex; } .benchmark-card .plot-wrap, .rrg-card .plot-wrap { min-height: 360px; } .detail-card .plot, .detail-plot { min-height: 320px; } .slider-row { padding: 14px 13px 12px; } }
+
+/* Final chart composition: equal upper panels, shared timeline between rows. */
+.main-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.main-grid > .side-column { display: none; }
+.rrg-card .plot-wrap, .benchmark-card .plot-wrap { height: 540px; min-height: 540px; }
+.rrg-card .plot, .benchmark-card .plot { height: 540px !important; min-height: 540px; }
+.slider-row { max-width: 1500px; margin-inline: auto; }
+@media (max-width: 1000px) { .main-grid { grid-template-columns: 1fr; } .rrg-card .plot-wrap, .benchmark-card .plot-wrap { height: 420px; min-height: 420px; } .rrg-card .plot, .benchmark-card .plot { height: 420px !important; min-height: 420px; } }
+@media (max-width: 700px) { .rrg-card .plot-wrap, .benchmark-card .plot-wrap { height: 360px; min-height: 360px; } .rrg-card .plot, .benchmark-card .plot { height: 360px !important; min-height: 360px; } }
