@@ -98,7 +98,8 @@ function RrgChart({ assets, selectedTicker, onTickerSelect, height = 540, classN
     2,
     ...allPoints.map((point) => Math.max(Math.abs(point.x - 100), Math.abs(point.y - 100))),
   );
-  const padding = Math.max(maxDistance * 0.035, 0.75);
+  // Keep the auto-fit behavior, but reduce unused space around the outermost points.
+  const padding = Math.max(maxDistance * 0.015, 0.35);
   const min = 100 - maxDistance - padding;
   const balancedMin = min;
   const max = 100 + maxDistance + padding;
