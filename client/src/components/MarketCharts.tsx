@@ -100,6 +100,7 @@ function RrgChart({ assets, selectedTicker, onTickerSelect, height = 540, classN
   );
   const padding = Math.max(maxDistance * 0.035, 0.75);
   const min = 100 - maxDistance - padding;
+  const balancedMin = min;
   const max = 100 + maxDistance + padding;
 
   const option: echarts.EChartsOption = {
@@ -123,7 +124,7 @@ function RrgChart({ assets, selectedTicker, onTickerSelect, height = 540, classN
       nameLocation: "middle",
       nameGap: 31,
       nameTextStyle: { color: chartMuted, fontSize: 10 },
-      axisLabel: { color: chartMuted, fontSize: 10 },
+      axisLabel: { color: chartMuted, fontSize: 10, formatter: (value: number) => String(Math.round(value)) },
       axisLine: { lineStyle: { color: "rgba(157,190,220,.35)" } },
       splitLine: { lineStyle: { color: chartGrid } },
     },
@@ -135,7 +136,7 @@ function RrgChart({ assets, selectedTicker, onTickerSelect, height = 540, classN
       nameLocation: "middle",
       nameGap: 42,
       nameTextStyle: { color: chartMuted, fontSize: 10 },
-      axisLabel: { color: chartMuted, fontSize: 10 },
+      axisLabel: { color: chartMuted, fontSize: 10, formatter: (value: number) => String(Math.round(value)) },
       axisLine: { lineStyle: { color: "rgba(157,190,220,.35)" } },
       splitLine: { lineStyle: { color: chartGrid } },
     },
@@ -151,10 +152,21 @@ function RrgChart({ assets, selectedTicker, onTickerSelect, height = 540, classN
         data: [[100, 100]],
         symbolSize: 0,
         silent: true,
+        markArea: {
+          silent: true,
+          itemStyle: { borderWidth: 0 },
+          data: [
+            [{ xAxis: 100, yAxis: 100 }, { xAxis: max, yAxis: max, itemStyle: { color: "rgba(53,224,138,.07)" } }],
+            [{ xAxis: balancedMin, yAxis: 100 }, { xAxis: 100, yAxis: max, itemStyle: { color: "rgba(88,166,255,.07)" } }],
+            [{ xAxis: balancedMin, yAxis: balancedMin }, { xAxis: 100, yAxis: 100, itemStyle: { color: "rgba(255,107,124,.06)" } }],
+            [{ xAxis: 100, yAxis: balancedMin }, { xAxis: max, yAxis: 100, itemStyle: { color: "rgba(255,207,92,.06)" } }],
+          ],
+        },
         markLine: {
           silent: true,
           symbol: "none",
           lineStyle: { color: "rgba(157,190,220,.42)", type: "dashed", width: 1 },
+          label: { show: false },
           data: [{ xAxis: 100 }, { yAxis: 100 }],
         },
       },
