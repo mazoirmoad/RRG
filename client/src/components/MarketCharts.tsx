@@ -51,14 +51,18 @@ function useEChart(
   onClick?: (params: any) => void,
 ) {
   const clickRef = useRef(onClick);
+  const optionRef = useRef(option);
+  const chartRef = useRef<echarts.ECharts | null>(null);
   clickRef.current = onClick;
+  optionRef.current = option;
 
   useEffect(() => {
     if (!ref.current) return;
     const chart = echarts.init(ref.current, undefined, { renderer: "canvas" });
+    chartRef.current = chart;
     const handleClick = (params: any) => clickRef.current?.(params);
     chart.on("click", handleClick);
-    chart.setOption(option, true);
+    chart.setOption(optionRef.current, true);
 
     const resizeObserver = new ResizeObserver(() => chart.resize());
     resizeObserver.observe(ref.current);
@@ -66,8 +70,13 @@ function useEChart(
       resizeObserver.disconnect();
       chart.off("click", handleClick);
       chart.dispose();
+      chartRef.current = null;
     };
-  }, [ref, option]);
+  }, [ref]);
+
+  useEffect(() => {
+    chartRef.current?.setOption(option);
+  }, [option]);
 }
 
 function tooltipStyle() {
@@ -98,8 +107,8 @@ function RrgChart({ assets, selectedTicker, onTickerSelect, height = 540, classN
     2,
     ...allPoints.map((point) => Math.max(Math.abs(point.x - 100), Math.abs(point.y - 100))),
   );
-  // Keep the auto-fit behavior, but reduce unused space around the outermost points.
-  const padding = Math.max(maxDistance * 0.015, 0.35);
+  // Keep the auto-fit behavior, but use nearly all of the plot area.
+  const padding = Math.max(maxDistance * 0.005, 0.15);
   const min = 100 - maxDistance - padding;
   const balancedMin = min;
   const max = 100 + maxDistance + padding;
@@ -107,7 +116,7 @@ function RrgChart({ assets, selectedTicker, onTickerSelect, height = 540, classN
   const option: echarts.EChartsOption = {
     animation: false,
     backgroundColor: "transparent",
-    grid: { left: 58, right: 22, top: 34, bottom: 48 },
+    grid: { left: 42, right: 14, top: 28, bottom: 42 },
     textStyle: { color: chartMuted, fontFamily: "IBM Plex Mono, monospace" },
     tooltip: {
       trigger: "item",
@@ -141,6 +150,16 @@ function RrgChart({ assets, selectedTicker, onTickerSelect, height = 540, classN
       axisLine: { lineStyle: { color: "rgba(157,190,220,.35)" } },
       splitLine: { lineStyle: { color: chartGrid } },
     },
+    dataZoom: [{
+      type: "inside",
+      xAxisIndex: 0,
+      yAxisIndex: 0,
+      filterMode: "none",
+      zoomOnMouseWheel: true,
+      zoomOnMousePinch: true,
+      moveOnMouseMove: true,
+      moveOnMouseWheel: false,
+    } as any],
     graphic: [
       { type: "text", right: 28, top: 42, style: { text: "LEADING", fill: "rgba(53,224,138,.78)", font: "10px IBM Plex Mono" } },
       { type: "text", left: 66, top: 42, style: { text: "IMPROVING", fill: "rgba(88,166,255,.78)", font: "10px IBM Plex Mono" } },
