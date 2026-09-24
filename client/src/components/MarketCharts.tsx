@@ -202,6 +202,7 @@ function CandlestickChart({ ticker, label, rows, selectedIndex, selectedTimestam
     textStyle: { color: chartMuted, fontFamily: "IBM Plex Mono, monospace" },
     tooltip: {
       trigger: "axis",
+      showContent: false,
       axisPointer: { type: "cross", lineStyle: { color: "rgba(88,166,255,.55)", width: 1 } },
       ...tooltipStyle(),
       formatter: (params: any) => {
@@ -226,12 +227,14 @@ function CandlestickChart({ ticker, label, rows, selectedIndex, selectedTimestam
         },
         interval: Math.max(0, Math.floor(rows.length / 7) - 1),
       },
+      axisPointer: { show: true, label: { show: true, backgroundColor: tooltipBackground, color: chartText, borderColor: tooltipBorder, borderWidth: 1, formatter: (params: any) => { const row = rows[Number(params.value)]; return row ? formatDate(row.ts) : ""; } } },
       axisLine: { lineStyle: { color: "rgba(157,190,220,.35)" } },
       splitLine: { show: false },
     },
     yAxis: {
       scale: true,
       axisLabel: { color: chartMuted, fontSize: 9, formatter: (value: number) => `$${value}` },
+      axisPointer: { show: true, label: { show: true, backgroundColor: tooltipBackground, color: chartText, borderColor: tooltipBorder, borderWidth: 1 } },
       axisLine: { show: false },
       splitLine: { lineStyle: { color: chartGrid } },
     },
